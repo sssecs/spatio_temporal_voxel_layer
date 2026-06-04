@@ -161,7 +161,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // get the parameters for the specific topic
     double observation_keep_time, expected_update_rate, min_obstacle_height;
     double max_obstacle_height, min_z, max_z, vFOV, vFOVPadding;
-    double hFOV, decay_acceleration, obstacle_range;
+    double hFOV, decay_acceleration, obstacle_range, obstacle_range_min;
     std::string topic, sensor_frame, data_type, filter_str;
     bool inf_is_valid = false, clearing, marking;
     bool clear_after_reading, enabled;
@@ -180,6 +180,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     declareParameter(source + "." + "marking", rclcpp::ParameterValue(true));
     declareParameter(source + "." + "clearing", rclcpp::ParameterValue(false));
     declareParameter(source + "." + "obstacle_range", rclcpp::ParameterValue(2.5));
+    declareParameter(source + "." + "obstacle_range_min", rclcpp::ParameterValue(0.01));
 
     declareParameter(source + "." + "min_z", rclcpp::ParameterValue(0.0));
     declareParameter(source + "." + "max_z", rclcpp::ParameterValue(10.0));
@@ -206,6 +207,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     node_->get_parameter(name_ + "." + source + "." + "marking", marking);
     node_->get_parameter(name_ + "." + source + "." + "clearing", clearing);
     node_->get_parameter(name_ + "." + source + "." + "obstacle_range", obstacle_range);
+    node_->get_parameter(name_ + "." + source + "." + "obstacle_range_min", obstacle_range_min);
 
     // minimum distance from camera it can see
     node_->get_parameter(name_ + "." + source + "." + "min_z", min_z);
@@ -257,7 +259,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     _observation_buffers.push_back(
       std::shared_ptr<buffer::MeasurementBuffer>(new buffer::MeasurementBuffer(topic,
       observation_keep_time, expected_update_rate, min_obstacle_height,
-      max_obstacle_height, obstacle_range, *tf_, _global_frame, sensor_frame,
+      max_obstacle_height, obstacle_range, obstacle_range_min, *tf_, _global_frame, sensor_frame,
       transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
       decay_acceleration, marking, clearing, _voxel_size,
       filter, voxel_min_points, enabled, clear_after_reading, model_type,

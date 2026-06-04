@@ -50,7 +50,7 @@ using namespace std::chrono_literals;
 MeasurementBuffer::MeasurementBuffer(
   const std::string & topic_name, const double & observation_keep_time,
   const double & expected_update_rate, const double & min_obstacle_height,
-  const double & max_obstacle_height, const double & obstacle_range,
+  const double & max_obstacle_height, const double & obstacle_range, const double & obstacle_range_min,
   tf2_ros::Buffer & tf, const std::string & global_frame,
   const std::string & sensor_frame, const double & tf_tolerance,
   const double & min_d, const double & max_d, const double & vFOV,
@@ -64,7 +64,7 @@ MeasurementBuffer::MeasurementBuffer(
   _expected_update_rate(expected_update_rate), _last_updated(node->now()),
   _global_frame(global_frame), _sensor_frame(sensor_frame),
   _topic_name(topic_name), _min_obstacle_height(min_obstacle_height),
-  _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
+  _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range), _obstacle_range_min(obstacle_range_min),
   _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d),
   _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
   _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
@@ -116,6 +116,7 @@ void MeasurementBuffer::BufferROSCloud(
 
     _observation_list.front()._orientation = global_pose.pose.orientation;
     _observation_list.front()._obstacle_range_in_m = _obstacle_range;
+    _observation_list.front()._obstacle_range_min_in_m = _obstacle_range_min;
     _observation_list.front()._min_z_in_m = _min_z;
     _observation_list.front()._max_z_in_m = _max_z;
     _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
@@ -149,7 +150,7 @@ void MeasurementBuffer::BufferROSCloud(
       pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
       sor.setInputCloud(cloud_pcl);
       sor.setFilterFieldName("z");
-      sor.setFilterLimits(_min_obstacle_height, _max_obstacle_height);
+      sor.setFilterLimits(_min_obstacle_height + global_pose.pose.position.z - 1.15, _max_obstacle_height + global_pose.pose.position.z - 1.15);
       sor.setDownsampleAllData(false);
       float v_s = static_cast<float>(_voxel_size);
       sor.setLeafSize(v_s, v_s, v_s);
@@ -163,7 +164,7 @@ void MeasurementBuffer::BufferROSCloud(
       pass_through_filter.setKeepOrganized(false);
       pass_through_filter.setFilterFieldName("z");
       pass_through_filter.setFilterLimits(
-        _min_obstacle_height, _max_obstacle_height);
+        _min_obstacle_height + global_pose.pose.position.z - 1.15, _max_obstacle_height + global_pose.pose.position.z - 1.15);
       pass_through_filter.filter(*cloud_filtered);
       pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
     }
