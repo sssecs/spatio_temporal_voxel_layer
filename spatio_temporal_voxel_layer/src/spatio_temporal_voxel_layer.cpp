@@ -170,8 +170,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   while (ss >> source) {
     // get the parameters for the specific topic
     double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
+    double robot_height;
     double min_z, max_z, vFOV, vFOVPadding;
-    double hFOV, decay_acceleration, obstacle_range;
+    double hFOV, decay_acceleration, obstacle_range, obstacle_range_min;;
     std::string topic, sensor_frame, data_type, filter_str;
     bool inf_is_valid = false, clearing, marking;
     bool clear_after_reading, enabled;
@@ -187,10 +188,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       rclcpp::ParameterValue(std::string("PointCloud2")));
     declareParameter(source + "." + "min_obstacle_height", rclcpp::ParameterValue(0.0));
     declareParameter(source + "." + "max_obstacle_height", rclcpp::ParameterValue(3.0));
+    declareParameter(source + "." + "robot_height", rclcpp::ParameterValue(1.15));
     declareParameter(source + "." + "inf_is_valid", rclcpp::ParameterValue(false));
     declareParameter(source + "." + "marking", rclcpp::ParameterValue(true));
     declareParameter(source + "." + "clearing", rclcpp::ParameterValue(false));
     declareParameter(source + "." + "obstacle_range", rclcpp::ParameterValue(2.5));
+    declareParameter(source + "." + "obstacle_range_min", rclcpp::ParameterValue(0.01));
 
     declareParameter(source + "." + "min_z", rclcpp::ParameterValue(0.0));
     declareParameter(source + "." + "max_z", rclcpp::ParameterValue(10.0));
@@ -215,10 +218,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     node->get_parameter(name_ + "." + source + "." + "data_type", data_type);
     node->get_parameter(name_ + "." + source + "." + "min_obstacle_height", min_obstacle_height);
     node->get_parameter(name_ + "." + source + "." + "max_obstacle_height", max_obstacle_height);
+    node->get_parameter(name_ + "." + source + "." + "robot_height", robot_height);
     node->get_parameter(name_ + "." + source + "." + "inf_is_valid", inf_is_valid);
     node->get_parameter(name_ + "." + source + "." + "marking", marking);
     node->get_parameter(name_ + "." + source + "." + "clearing", clearing);
     node->get_parameter(name_ + "." + source + "." + "obstacle_range", obstacle_range);
+    node->get_parameter(name_ + "." + source + "." + "obstacle_range_min", obstacle_range_min);
 
     // minimum distance from camera it can see
     node->get_parameter(name_ + "." + source + "." + "min_z", min_z);
@@ -267,7 +272,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         new buffer::MeasurementBuffer(
           source, topic,
           observation_keep_time, expected_update_rate, min_obstacle_height,
-          max_obstacle_height, obstacle_range, *tf_, _global_frame, sensor_frame,
+          max_obstacle_height, obstacle_range, obstacle_range_min, *tf_, _global_frame, sensor_frame,
           transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
