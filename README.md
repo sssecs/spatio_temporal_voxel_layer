@@ -135,6 +135,7 @@ rgbd_obstacle_layer:
     clear_after_reading: true    #default false, clear the buffer after the layer gets readings from it
     filter: "voxel"              #default passthrough, apply "voxel", "passthrough", or no filter to sensor data, recommended to have at one filter on
     voxel_min_points: 0          #default 0, minimum points per voxel for voxel filter
+    robot_body_boxes_file: ""    #default "", path to a yaml describing the robot's body as boxes in this source's sensor frame to exclude self-points from marking
   rgbd1_clear:
     enabled: true                #default true, can be toggled on/off with associated service call
     data_type: PointCloud2
@@ -149,6 +150,17 @@ rgbd_obstacle_layer:
     model_type: 0                #default 0 (depth camera). Use 1 for 3D Lidar
 ```
 More configuration samples are included in the example folder, including a 3D lidar one.
+
+To ignore points measured on the robot's own body (e.g. its lidar housings), set `robot_body_boxes_file` on an observation source to a YAML describing the robot body as oriented boxes in that source's sensor frame. Points falling inside any box (expanded by the file's `margin`) are dropped from the cloud before it is transformed into the global frame, so they are never marked as obstacles. Different sources may use different box files (one per sensor frame). See `robot_body_boxes.yaml` at the repository root for the format:
+
+```
+margin: 0.02
+boxes:
+  - type: oriented
+    center: [x, y, z]
+    axes: [[ax, ay, az], [bx, by, bz], [cx, cy, cz]] # orthonormal box axes
+    half_extents: [hx, hy, hz]
+```
 
 ### local/global_costmap_params.yaml
 

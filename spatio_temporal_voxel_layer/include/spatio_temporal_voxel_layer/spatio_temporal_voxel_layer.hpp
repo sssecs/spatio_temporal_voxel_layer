@@ -52,6 +52,7 @@
 #include <unordered_set>
 // voxel grid
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_grid.hpp"
+#include "spatio_temporal_voxel_layer/robot_body_boxes.hpp"
 // ROS
 #include "rclcpp/rclcpp.hpp"
 #include "rcl_interfaces/msg/set_parameters_result.hpp"

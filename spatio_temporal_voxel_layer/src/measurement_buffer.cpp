@@ -62,6 +62,7 @@ MeasurementBuffer::MeasurementBuffer(
   const bool & clearing, const double & voxel_size, const Filters & filter,
   const int & voxel_min_points, const bool & enabled,
   const bool & clear_buffer_after_reading, const ModelType & model_type,
+  const robot_body_boxes::RobotBodyBoxes & robot_body_boxes,
   rclcpp::Clock::SharedPtr clock, rclcpp::Logger logger)
 : _buffer(tf),
   _observation_keep_time(rclcpp::Duration::from_seconds(observation_keep_time)),
@@ -78,7 +79,8 @@ MeasurementBuffer::MeasurementBuffer(
   _voxel_size(voxel_size), _marking(marking), _clearing(clearing),
   _filter(filter), _voxel_min_points(voxel_min_points),
   _clear_buffer_after_reading(clear_buffer_after_reading),
-  _enabled(enabled), _model_type(model_type), clock_(clock), logger_(logger)
+  _enabled(enabled), _model_type(model_type),
+  _robot_body_boxes(robot_body_boxes), clock_(clock), logger_(logger)
 /*****************************************************************************/
 {
 }
@@ -141,13 +143,23 @@ void MeasurementBuffer::BufferROSCloud(
       return;
     }
 
+    // exclude points measured on the robot's own body. The boxes are
+    // expressed in the sensor frame, so filter before transforming the
+    // cloud into the global frame.
+    point_cloud_ptr cld_box_filtered(new sensor_msgs::msg::PointCloud2());
+    const sensor_msgs::msg::PointCloud2 * cloud_ptr = &cloud;
+    if (!_robot_body_boxes.boxes.empty()) {
+      robot_body_boxes::FilterCloud(cloud, *cld_box_filtered, _robot_body_boxes);
+      cloud_ptr = cld_box_filtered.get();
+    }
+
     // transform the cloud in the global frame
     point_cloud_ptr cld_global(new sensor_msgs::msg::PointCloud2());
     geometry_msgs::msg::TransformStamped tf_stamped =
       _buffer.lookupTransform(
       _global_frame, cloud.header.frame_id,
       tf2_ros::fromMsg(cloud.header.stamp));
-    tf2::doTransform(cloud, *cld_global, tf_stamped);
+    tf2::doTransform(*cloud_ptr, *cld_global, tf_stamped);
 
     pcl::PCLPointCloud2::Ptr cloud_pcl(new pcl::PCLPointCloud2());
     pcl::PCLPointCloud2::Ptr cloud_filtered(new pcl::PCLPointCloud2());

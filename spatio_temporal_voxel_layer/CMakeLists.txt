@@ -32,6 +32,7 @@ find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(openvdb_vendor REQUIRED)
+find_package(yaml_cpp_vendor REQUIRED)
 
 remove_definitions(-DDISABLE_LIBUSB-1.0)
 find_package(Eigen3 REQUIRED)
@@ -71,6 +72,7 @@ set(dependencies
   visualization_msgs
   builtin_interfaces
   openvdb_vendor
+  yaml_cpp_vendor
 )
 
 set(library_name spatio_temporal_voxel_layer_core)
@@ -95,6 +97,7 @@ include_directories(
 add_library(${library_name} SHARED
             src/spatio_temporal_voxel_layer.cpp
             src/spatio_temporal_voxel_grid.cpp
+            src/robot_body_boxes.cpp
             src/measurement_buffer.cpp
             src/frustum_models/depth_camera_frustum.cpp
             src/frustum_models/three_dimensional_lidar_frustum.cpp
@@ -109,6 +112,7 @@ target_link_libraries(${library_name}
   ${EIGEN3_LIBRARIES}
   ${PCL_LIBRARIES}
   OpenVDB::openvdb
+  yaml-cpp
 )
 
 ament_target_dependencies(${library_name} ${dependencies})

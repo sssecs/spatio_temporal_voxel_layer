@@ -47,6 +47,7 @@
 #include <memory>
 // measurement structs
 #include "spatio_temporal_voxel_layer/measurement_reading.h"
+#include "spatio_temporal_voxel_layer/robot_body_boxes.hpp"
 // PCL
 #include "pcl/common/transforms.h"
 #include "pcl/filters/voxel_grid.h"
@@ -112,6 +113,7 @@ public:
     const bool & enabled,
     const bool & clear_buffer_after_reading,
     const ModelType & model_type,
+    const robot_body_boxes::RobotBodyBoxes & robot_body_boxes,
     rclcpp::Clock::SharedPtr clock,
     rclcpp::Logger logger);
 
@@ -167,6 +169,7 @@ private:
   int _voxel_min_points;
   bool _clear_buffer_after_reading, _enabled;
   ModelType _model_type;
+  robot_body_boxes::RobotBodyBoxes _robot_body_boxes;
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Logger logger_;
 };

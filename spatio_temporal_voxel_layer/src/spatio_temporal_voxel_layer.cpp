@@ -206,6 +206,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     declareParameter(source + "." + "clear_after_reading", rclcpp::ParameterValue(false));
     declareParameter(source + "." + "enabled", rclcpp::ParameterValue(true));
     declareParameter(source + "." + "model_type", rclcpp::ParameterValue(0));
+    declareParameter(
+      source + "." + "robot_body_boxes_file",
+      rclcpp::ParameterValue(std::string("")));
 
     node->get_parameter(name_ + "." + source + "." + "topic", topic);
     node->get_parameter(name_ + "." + source + "." + "sensor_frame", sensor_frame);
@@ -250,6 +253,30 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     node->get_parameter(name_ + "." + source + "." + "model_type", model_type_int);
     ModelType model_type = static_cast<ModelType>(model_type_int);
 
+    // path to a yaml describing the robot's body as boxes in this source's
+    // sensor frame, to exclude points measured on the robot itself from being
+    // marked as obstacles
+    std::string robot_body_boxes_file;
+    node->get_parameter(
+      name_ + "." + source + "." + "robot_body_boxes_file",
+      robot_body_boxes_file);
+
+    robot_body_boxes::RobotBodyBoxes robot_body_boxes;
+    if (!robot_body_boxes_file.empty()) {
+      if (robot_body_boxes::LoadRobotBodyBoxes(robot_body_boxes_file, robot_body_boxes)) {
+        RCLCPP_INFO(
+          logger_,
+          "%s loaded %zu robot body box(es) from %s for %s.",
+          getName().c_str(), robot_body_boxes.boxes.size(),
+          robot_body_boxes_file.c_str(), source.c_str());
+      } else {
+        RCLCPP_ERROR(
+          logger_,
+          "%s failed to load robot body boxes from %s for %s.",
+          getName().c_str(), robot_body_boxes_file.c_str(), source.c_str());
+      }
+    }
+
     if (filter_str == "passthrough") {
       RCLCPP_INFO(logger_, "Passthough filter activated.");
       filter = buffer::Filters::PASSTHROUGH;
@@ -276,7 +303,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
-          node->get_clock(), node->get_logger())));
+          robot_body_boxes, node->get_clock(), node->get_logger())));
 
     // Add buffer to marking observation buffers
     if (marking) {
